@@ -1,8 +1,86 @@
+' Copyright (c) 2022 Mi Gran Dama
+' See the LICENSE file for details
 !$managerColor="white"
-
 !unquoted procedure manager($id,$name,$position,$title,$parentid="",$options="",$reportOptions="")
-  $id [label=<<b>$position</b><br/>$name, $title> shape="box" style="rounded, filled" height="1" fontname="Helvetica" fontsize="13" width="4" fontcolor="$managerColor" $options]
-  !if ($parentid!="")
-    $parentid -> $id [minlen=3 $reportOptions]
-  !endif
+$id [label=<<b>$position</b><br/>$name, $title> shape="box" style="rounded, filled" height="1" fontname="Helvetica" fontsize="13" width="4" fontcolor="$managerColor" $options]
+!if ($parentid!="")
+  $parentid -> $id [minlen=3 $reportOptions]
+!endif
+!endprocedure
+
+!unquoted procedure individual($id,$name,$office="",$parentid="",$options="")
+$id [
+!if ($office!="")
+  label=<<b>$office</b><br/>$name>
+!else
+  label=<$name>
+!endif
+ shape="box" style="rounded" fontsize="13" width="2.5" height="0.4" $options]
+!if ($parentid!="")
+  $parentid -> $id [minlen=3]
+!endif
+!endprocedure
+
+!procedure individualEntity($individual,$parentid="")
+  individual($individual.id,$individual.name,$individual.office,$parentid)
+!endprocedure
+
+!procedure subgroupEntity($parentid,$group)
+  !$first = "none"
+  subgraph cluster_##$group.id {
+    edge [style=invis]
+    label="$group.name"
+    !foreach $emp in $group.employees
+      !if ($first == "none")
+        !$first = $emp.id
+      !endif
+      individualEntity($emp)
+    !endfor
+    !$arrow = ""
+    !foreach $emp in $group.employees
+      $arrow $emp.id
+      !$arrow = " -> "
+    !endfor
+  }
+  $parentid -> $first [lhead=cluster_##$group.id minlen=3]
+!endprocedure
+
+!procedure officeEntity($office,$parentid="")
+manager($office.id,$office.name,$office.office,$office.position,$parentid,$office.positionOptions, $office.reportOptions)
+  !foreach $emp in $office.employees
+    !if ($emp.individual == true )
+      individualEntity($emp,$office.id)
+    !else
+      officeEntity($emp,$office.id)
+    !endif
+  !endfor
+
+  !foreach $subgroup in $office.subgroups
+    subgroupEntity($office.id,$subgroup)
+  !endfor
+
+!endprocedure
+
+!procedure team($id,$name,$members,$parentid)
+subgraph cluster_##$id {
+  edge [style=invis]
+  label="$name"
+!$empindex = 0
+!foreach $emp in $members
+  !$empid = $id + $empindex
+  individual($empid,$emp)
+  !$empindex = $empindex + 1
+!endfor
+
+!$arrow = ""
+!$empindex = 0
+!foreach $emp in $members
+  !$empid = $id + $empindex
+  $arrow $empid
+  !$arrow = " -> "
+  !$empindex = $empindex + 1
+!endfor
+}
+!$firstid = $id + "0"
+$parentid -> $firstid [lhead=cluster_##$id minlen=3]
 !endprocedure
