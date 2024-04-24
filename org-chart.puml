@@ -1,5 +1,3 @@
-' Copyright (c) 2022 Mi Gran Dama
-' See the LICENSE file for details
 !$managerColor="white"
 !unquoted procedure manager($id,$name,$position,$title,$parentid="",$options="",$reportOptions="")
 $id [label=<<b>$position</b><br/>$name, $title> shape="box" style="rounded, filled" height="1" fontname="Helvetica" fontsize="13" width="4" fontcolor="$managerColor" $options]
